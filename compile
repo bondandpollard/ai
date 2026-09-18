@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 <source_basename>"
+  exit 1
+fi
+
+source="$1"
+echo "Compiling: $source"
+g++ "${source}.cpp" -o "${source}.exe" -static -static-libgcc -static-libstdc++ -lshlwapi -lole32 -luuid
