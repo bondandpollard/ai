@@ -1,8 +1,13 @@
 /*
 Program   : neural_network.cpp
 System    : ai
-Function  : Demonstration of a neural network that can be trained.
-            This is the foundation of Artificial Intelligence.
+Function  : Demonstration of a single artificial neuron.
+            A neuron is a fundamental component of artificial intelligence.
+            
+            Calculates the weighted sum, sigmoid activation,
+            squared error loss and sigmoid derivative.
+            
+            Gradient descent and training will be added later.
             
             Test Data
             
@@ -14,8 +19,8 @@ Function  : Demonstration of a neural network that can be trained.
             
             Expected Result
 
-            Weighted Sum  = 0.7
-            Sigma         = 0.668188
+            Weighted Sum   = 0.7
+            Sigmoid Output = 0.668188
             
             
 Author    : Ian Bond
@@ -44,6 +49,64 @@ struct neuron_data {
   double bias;
 };
 
+double calculate_weighted_sum(const neuron_data& nd) {
+  // Calculate the weighted sum of the neuron's inputs.
+  //
+  // z = (x1 * w1) + (x2 * w2) + b
+  //
+  // z  = weighted sum
+  // x1 = input 1
+  // x2 = input 2
+  // w1 = weight 1
+  // w2 = weight 2
+  // b  = bias
+
+  return (nd.input_1 * nd.weight_1) + (nd.input_2 * nd.weight_2) + nd.bias;
+}
+
+
+double sigmoid(double weighted_sum) {
+  // Apply the sigmoid activation function.
+  //
+  // s = 1 / (1 + e^(-z))
+  //
+  // s = sigmoid output
+  // e = Euler's number (approximately 2.71828)
+  // z = weighted sum
+  //
+  // Returns a value between 0 and 1.
+  
+  return 1/(1+std::exp(weighted_sum*-1));
+
+}
+
+double calculate_loss(double prediction, double target) {
+  // Calculate the squared error between prediction and target.
+  //
+  // L = (t - p)^2
+  //
+  // L = loss
+  // t = target (correct answer)
+  // p = prediction (sigmoid output)
+  //
+  // A lower loss indicates a prediction closer to the target.
+  return (target - prediction) * (target - prediction);
+}
+
+double sigmoid_derivative( double sigmoid_output) {
+  // Calculate the derivative of the sigmoid function.
+  //
+  // ds/dz = s * (1 - s)
+  //
+  // s     = sigmoid output
+  // z     = weighted sum
+  // ds/dz = rate of change of s with respect to z
+  //
+  // Used during gradient descent to calculate how changes
+  // to the weighted sum affect the neuron's output.
+  return sigmoid_output*(1-sigmoid_output);
+}
+
 double prompt_double (const std::string& p_prompt) {
   // Prompt user to enter a double (floating point) number.
   double value;
@@ -53,38 +116,8 @@ double prompt_double (const std::string& p_prompt) {
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   } 
-  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // remove newline from buffer so next prompt works
+  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // discard remainder of input line
   return value;
-}
- 
-double calculate_weighted_sum(const neuron_data nd) {
-  // Calculate and return the weighted sum. 
-  
-  // z = x1*w1 + x2*w2 + b
-  
-  // x1 = input 1
-  // x2 = input 2
-  // w1 = weight 1
-  // w2 = weight 2
-  // b  = bias
-  
-  double result;
-
-  return result = (nd.input_1 * nd.weight_1) + (nd.input_2 * nd.weight_2) + nd.bias;
-}
-
-
-double sigmoid(double weighted_sum) {
-  // Calculate and return the sigmoid of weighted_sum.
-  
-  // s = 1 / (1+e^-z)
-  
-  // s = sigma
-  // e = exponent
-  // z = weighted sum (inverse)
-  
-  return 1/(1+std::exp(weighted_sum*-1));
-
 }
 
 void get_values(neuron_data& nd){
@@ -108,10 +141,16 @@ int main(int argc, char* argv[]) {
   }
 
   get_values(nd);
-  double weighted_sum=calculate_weighted_sum(nd);
-  double neuron_output = sigmoid(weighted_sum);
-  std::cout << "Weighted Sum = " << weighted_sum << '\n';
-  std::cout << "Neuron Output = " << neuron_output << '\n';
+  double weighted_sum=calculate_weighted_sum(nd);       // Calculated the weighted sum of the neuron's inputs
+  double sigmoid_output = sigmoid(weighted_sum);         // Apply the sigmoid activation function to the weighted sum to return number between 0 and 1
+  double target = 1.0;
+  double loss = calculate_loss(sigmoid_output, target);  // Calculate the loss as squared error (difference) between prediction and target
+  double sigmoid_slope = sigmoid_derivative(sigmoid_output); // Calculate derivative of sigmoid function, used for gradient descent calc
+  
+  std::cout << "Weighted Sum = " << weighted_sum << std::endl;
+  std::cout << "Sigmoid Output = " << sigmoid_output << std::endl;
+  std::cout << "Loss = " << loss << std::endl;
+  std::cout << "Sigmoid Slope = " << sigmoid_slope << std::endl;
   return EXIT_SUCCESS;
 }
 
