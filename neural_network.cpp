@@ -119,14 +119,14 @@ double calculate_loss(double prediction, double target) {
 double sigmoid_derivative(double sigmoid_output) {
   // Calculate the derivative of the sigmoid function.
   //
-  // ds/dz = s * (1 - s)
+  // dp/dz = p * (1 - p)
   //
-  // s     = sigmoid output
+  // p     = prediction (sigmoid output)
   // z     = weighted sum
-  // ds/dz = rate of change of s with respect to z
+  // dp/dz = rate of change of prediction with respect to weighted sum
   //
   // Used during gradient descent to calculate how changes
-  // to the weighted sum affect the neuron's output.
+  // to the weighted sum affect the neuron's prediction.
   return sigmoid_output*(1-sigmoid_output);
 }
 
