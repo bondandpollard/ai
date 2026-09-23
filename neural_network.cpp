@@ -15,12 +15,12 @@ Function  : Demonstration of a single artificial neuron.
               bias     : -0.1
 
             Expected Result
-              Weighted Sum        = 0.7
-              Sigmoid Output      = 0.668188
-              Loss                = 0.110099
-              Sigmoid Slope       = 0.221713
-              Loss Slope          = -0.663624
-              Weighted Sum Slope  = -0.147134
+              Weighted Sum                = 0.7
+              Prediction (Sigmoid Output) = 0.668188
+              Loss                        = 0.110099
+              Prediction Slope            = 0.221713
+              Loss Slope                  = -0.663624
+              Weighted Sum Slope          = -0.147134
               
 Author    : Ian Bond
 Date      : 18 September 2026
@@ -65,9 +65,9 @@ struct neuron_gradients {
 // Structure holding the calculated neuron data.
 struct neuron_results {
   double weighted_sum;
-  double sigmoid_output;
+  double prediction;      // sigmoid output
   double loss;
-  double sigmoid_slope;
+  double prediction_slope;
   double loss_slope;
   double weighted_sum_slope;
 };
@@ -143,18 +143,18 @@ double loss_derivative(double prediction, double target) {
   return 2 * (prediction - target);
 }
 
-double weighted_sum_derivative(double loss_slope, double sigmoid_slope) {
+double weighted_sum_derivative(double loss_slope, double prediction_slope) {
   // Calculate the derivative of the loss with respect to the weighted sum.
   //
   // dL/dz = (dL/dp) * (dp/dz)
   //
   // dL/dz = rate of change of loss with respect to weighted sum
   // dL/dp = loss slope
-  // dp/dz = sigmoid slope
+  // dp/dz = prediction slope
   //
   // Uses the chain rule to combine the two derivatives.
 
-  return (loss_slope * sigmoid_slope);
+  return (loss_slope * prediction_slope);
 }
 
 double prompt_double (const std::string& p_prompt) {
@@ -184,9 +184,9 @@ void set_neuron_parameters(neuron_parameters& np){
 
 void display_neuron(const neuron_results& nr) {
   std::cout << "Weighted Sum = " << nr.weighted_sum << std::endl;
-  std::cout << "Sigmoid Output = " << nr.sigmoid_output << std::endl;
+  std::cout << "Prediction (Sigmoid Output) = " << nr.prediction << std::endl;
   std::cout << "Loss = " << nr.loss << std::endl;
-  std::cout << "Sigmoid Slope = " << nr.sigmoid_slope << std::endl;
+  std::cout << "Prediction Slope = " << nr.prediction_slope << std::endl;
   std::cout << "Loss Slope = " << nr.loss_slope << std::endl;
   std::cout << "Weighted Sum Slope = " << nr.weighted_sum_slope << std::endl;
 }
@@ -208,12 +208,12 @@ int main(int argc, char* argv[]) {
   set_training_example(te);                                              // Set values for the training example.
   set_neuron_parameters(np);                                             // Set initial neuron parameters: weights and bias.
   nr.weighted_sum       = calculate_weighted_sum(te, np);                // Calculate the weighted sum of the neuron's inputs.
-  nr.sigmoid_output     = sigmoid(nr.weighted_sum);                      // Apply the sigmoid activation function to the weighted sum to return a number between 0 and 1. 
-  nr.loss               = calculate_loss(nr.sigmoid_output, te.target);  // Calculate the loss as squared error (difference) between prediction and target.
-  nr.sigmoid_slope      = sigmoid_derivative(nr.sigmoid_output);         // Calculate derivative of sigmoid function, used for gradient descent calculation.
-  nr.loss_slope         = loss_derivative(nr.sigmoid_output, te.target); // Calculate how the loss changes with respect to the prediction.
+  nr.prediction         = sigmoid(nr.weighted_sum);                      // Apply the sigmoid activation function to the weighted sum to return a number between 0 and 1. 
+  nr.loss               = calculate_loss(nr.prediction, te.target);      // Calculate the loss as squared error (difference) between prediction and target.
+  nr.prediction_slope   = sigmoid_derivative(nr.prediction);             // Calculate the prediction slope (dp/dz) using the sigmoid derivative.
+  nr.loss_slope         = loss_derivative(nr.prediction, te.target);     // Calculate how the loss changes with respect to the prediction.
   nr.weighted_sum_slope = weighted_sum_derivative(nr.loss_slope, 
-                                                  nr.sigmoid_slope);     // Use the chain rule to calculate how the loss changes with respect to the weighted sum.
+                                                  nr.prediction_slope);  // Use the chain rule to calculate how the loss changes with respect to the weighted sum.
   display_neuron(nr);
   
   return EXIT_SUCCESS;
