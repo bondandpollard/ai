@@ -65,11 +65,12 @@ struct neuron_gradients {
 // Structure holding the calculated neuron data.
 struct neuron_results {
   double weighted_sum;
-  double prediction;      // sigmoid output
-  double loss;
-  double prediction_slope;
-  double loss_slope;
   double weighted_sum_slope;
+  double prediction;      // sigmoid output
+  double prediction_slope;
+  double loss;
+  double loss_slope;
+
 };
 
 double calculate_weighted_sum(const training_example& te, const neuron_parameters& np) {
