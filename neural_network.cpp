@@ -91,9 +91,9 @@ double calculate_weighted_sum(const training_example& te, const neuron_parameter
 double sigmoid(double weighted_sum) {
   // Apply the sigmoid activation function.
   //
-  // s = 1 / (1 + e^(-z))
+  // p = 1 / (1 + e^(-z))
   //
-  // s = sigmoid output
+  // p = prediction (sigmoid output)
   // e = Euler's number (approximately 2.71828)
   // z = weighted sum
   //
@@ -116,7 +116,7 @@ double calculate_loss(double prediction, double target) {
   return (target - prediction) * (target - prediction);
 }
 
-double sigmoid_derivative(double sigmoid_output) {
+double sigmoid_derivative(double prediction) {
   // Calculate the derivative of the sigmoid function.
   //
   // dp/dz = p * (1 - p)
@@ -127,7 +127,7 @@ double sigmoid_derivative(double sigmoid_output) {
   //
   // Used during gradient descent to calculate how changes
   // to the weighted sum affect the neuron's prediction.
-  return sigmoid_output*(1-sigmoid_output);
+  return prediction * (1 - prediction);
 }
 
 double loss_derivative(double prediction, double target) {
