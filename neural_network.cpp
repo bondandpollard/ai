@@ -2,27 +2,24 @@
 Program   : neural_network.cpp
 System    : ai
 Function  : Demonstration of a single artificial neuron.
-            A neuron is a fundamental component of artificial intelligence.
-            
-            Calculates the weighted sum, sigmoid activation,
-            squared error loss and sigmoid derivative.
-            
-            Gradient descent and training will be added later.
-            
-            Test Data
-            
-            input 1   :  1.0
-            input 2   :  0.0
-            weight 1  :  0.8
-            weight 2  : -0.4
-            bias      : -0.1
-            
-            Expected Result
+            An artificial neuron is a fundamental component of neural networks.
 
-            Weighted Sum   = 0.7
-            Sigmoid Output = 0.668188
-            
-            
+            Test Training Example
+              input 1 : 1.0
+              input 2 : 0.0
+              target  : 1.0
+
+            Initial Neuron Parameters
+              weight 1 :  0.8
+              weight 2 : -0.4
+              bias     : -0.1
+
+            Expected Result
+              Weighted Sum    = 0.7
+              Sigmoid Output  = 0.668188
+              Loss            = 0.110099
+              Sigmoid Slope   = 0.221713
+              
 Author    : Ian Bond
 Date      : 18 September 2026
 
@@ -36,20 +33,42 @@ Version   Log/Ref   Date        Author        Description
 #include <cstdlib>   // EXIT_SUCCESS / EXIT_FAILURE
 #include <iostream>
 #include <limits>
-#include <sstream>
 #include <string>
 #include <vector>
 
-// Structure holding the input data, weights  and bias
-struct neuron_data {
+// Structure holding one training example:
+// input values and the expected target output.
+struct training_example {
   double input_1;
   double input_2;
+  double target;
+};
+
+// Structure holding the weights and bias (trainable parameters).
+struct neuron_parameters {
   double weight_1;
   double weight_2;
   double bias;
 };
 
-double calculate_weighted_sum(const neuron_data& nd) {
+// Structure holding the gradients used by gradient descent.
+// Each value represents how the loss changes with respect
+// to the corresponding trainable parameter.
+struct neuron_gradients {
+  double weight_1;
+  double weight_2;
+  double bias;
+};
+
+// Structure holding the calculated neuron data.
+struct neuron_results {
+  double weighted_sum;
+  double sigmoid_output;
+  double loss;
+  double sigmoid_slope;
+};
+
+double calculate_weighted_sum(const training_example& te, const neuron_parameters& np) {
   // Calculate the weighted sum of the neuron's inputs.
   //
   // z = (x1 * w1) + (x2 * w2) + b
@@ -61,7 +80,7 @@ double calculate_weighted_sum(const neuron_data& nd) {
   // w2 = weight 2
   // b  = bias
 
-  return (nd.input_1 * nd.weight_1) + (nd.input_2 * nd.weight_2) + nd.bias;
+  return (te.input_1 * np.weight_1) + (te.input_2 * np.weight_2) + np.bias;
 }
 
 
@@ -76,7 +95,7 @@ double sigmoid(double weighted_sum) {
   //
   // Returns a value between 0 and 1.
   
-  return 1/(1+std::exp(weighted_sum*-1));
+  return 1 / (1 + std::exp(-weighted_sum));
 
 }
 
@@ -120,18 +139,31 @@ double prompt_double (const std::string& p_prompt) {
   return value;
 }
 
-void get_values(neuron_data& nd){
-  nd.input_1   = prompt_double("Enter Input 1");
-  nd.input_2   = prompt_double("Enter  Input 2");
-  nd.weight_1  = prompt_double("Enter Weight 1");
-  nd.weight_2  = prompt_double("Enter Weight 2");
-  nd.bias      = prompt_double("Enter Bias");
+void set_training_example(training_example& te){
+  te.input_1   = prompt_double("Enter Input 1");
+  te.input_2   = prompt_double("Enter  Input 2");
+  te.target    = prompt_double("Enter Target");
+}
+
+void set_neuron_parameters(neuron_parameters& np){
+  np.weight_1  = prompt_double("Enter Weight 1");
+  np.weight_2  = prompt_double("Enter Weight 2");
+  np.bias      = prompt_double("Enter Bias");
+}
+
+void display_neuron(const neuron_results& nr) {
+  std::cout << "Weighted Sum = " << nr.weighted_sum << std::endl;
+  std::cout << "Sigmoid Output = " << nr.sigmoid_output << std::endl;
+  std::cout << "Loss = " << nr.loss << std::endl;
+  std::cout << "Sigmoid Slope = " << nr.sigmoid_slope << std::endl;
 }
 
 int main(int argc, char* argv[]) {
   // easy to use: args as vector<string>
   std::vector<std::string> args(argv, argv + argc);
-  neuron_data nd;
+  training_example te{};
+  neuron_parameters np{};
+  neuron_results nr{};
 
   // simple help
   if (argc > 1 && (args[1] == "-h" || args[1] == "--help")) {
@@ -140,17 +172,15 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
   }
 
-  get_values(nd);
-  double weighted_sum=calculate_weighted_sum(nd);       // Calculated the weighted sum of the neuron's inputs
-  double sigmoid_output = sigmoid(weighted_sum);         // Apply the sigmoid activation function to the weighted sum to return number between 0 and 1
-  double target = 1.0;
-  double loss = calculate_loss(sigmoid_output, target);  // Calculate the loss as squared error (difference) between prediction and target
-  double sigmoid_slope = sigmoid_derivative(sigmoid_output); // Calculate derivative of sigmoid function, used for gradient descent calc
+  set_training_example(te);                                         // Set initial values of training data.
+  set_neuron_parameters(np);                                        // Set initial neuron parameters: weights and bias.
+  nr.weighted_sum   = calculate_weighted_sum(te, np);               // Calculate the weighted sum of the neuron's inputs.
+  nr.sigmoid_output = sigmoid(nr.weighted_sum);                     // Apply the sigmoid activation function to the weighted sum to return a number between 0 and 1. 
+  nr.loss           = calculate_loss(nr.sigmoid_output, te.target); // Calculate the loss as squared error (difference) between prediction and target.
+  nr.sigmoid_slope  = sigmoid_derivative(nr.sigmoid_output);        // Calculate derivative of sigmoid function, used for gradient descent calculation.
   
-  std::cout << "Weighted Sum = " << weighted_sum << std::endl;
-  std::cout << "Sigmoid Output = " << sigmoid_output << std::endl;
-  std::cout << "Loss = " << loss << std::endl;
-  std::cout << "Sigmoid Slope = " << sigmoid_slope << std::endl;
+  display_neuron(nr);
+  
   return EXIT_SUCCESS;
 }
 
