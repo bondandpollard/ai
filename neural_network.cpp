@@ -21,6 +21,9 @@ Function  : Demonstration of a single artificial neuron.
               Prediction Slope            = 0.221713
               Loss Slope                  = -0.663624
               Weighted Sum Slope          = -0.147134
+              Weight 1 Gradient           = -0.147134
+              Weight 2 Gradient           = 0
+              Bias Gradient               = -0.147134
               
 Author    : Ian Bond
 Date      : 18 September 2026
@@ -53,13 +56,14 @@ struct neuron_parameters {
   double bias;
 };
 
-// Structure holding the gradients used by gradient descent.
+// Structure holding the gradients calculated by backpropagation
+// and used by gradient descent.
 // Each value represents how the loss changes with respect
 // to the corresponding trainable parameter.
 struct neuron_gradients {
-  double weight_1;
-  double weight_2;
-  double bias;
+  double weight_1;    // dL/dw1
+  double weight_2;    // dL/dw2
+  double bias;        // dL/db
 };
 
 // Structure holding the calculated neuron data.
@@ -125,8 +129,8 @@ double sigmoid_derivative(double prediction) {
   // p     = prediction (sigmoid output)
   // z     = weighted sum
   // dp/dz = rate of change of prediction with respect to weighted sum
-  //
-  // Used during gradient descent to calculate how changes
+  //  
+  // Used during backpropagation to calculate how changes
   // to the weighted sum affect the neuron's prediction.
   return prediction * (1 - prediction);
 }
@@ -156,6 +160,26 @@ double weighted_sum_derivative(double loss_slope, double prediction_slope) {
   // Uses the chain rule to combine the two derivatives.
 
   return (loss_slope * prediction_slope);
+}
+
+void calculate_gradients(const training_example& te,
+                         const neuron_results& nr,
+                         neuron_gradients& ng) {
+
+  // Calculate the gradients of the loss with respect to
+  // each trainable neuron parameter.
+  //
+  // dL/dw1 = (dL/dz) * x1
+  // dL/dw2 = (dL/dz) * x2
+  // dL/db  = (dL/dz)
+  //
+  // dL/dz = weighted sum slope
+  // x1     = input 1
+  // x2     = input 2
+
+  ng.weight_1 = nr.weighted_sum_slope * te.input_1;
+  ng.weight_2 = nr.weighted_sum_slope * te.input_2;
+  ng.bias     = nr.weighted_sum_slope;
 }
 
 double prompt_double (const std::string& p_prompt) {
@@ -192,12 +216,24 @@ void display_neuron(const neuron_results& nr) {
   std::cout << "Weighted Sum Slope = " << nr.weighted_sum_slope << std::endl;
 }
 
+void display_gradients(const neuron_gradients& ng) {
+  // Display how the loss changes with respect to each
+  // trainable neuron parameter.
+  
+  std::cout << "GRADIENTS:" << std::endl;
+  std::cout << "Weight 1 = " << ng.weight_1 << std::endl;
+  std::cout << "Weight 2 = " << ng.weight_2 << std::endl;
+  std::cout << "Bias = " << ng.bias << std::endl;
+}
+
 int main(int argc, char* argv[]) {
   // easy to use: args as vector<string>
   std::vector<std::string> args(argv, argv + argc);
   training_example te{};
   neuron_parameters np{};
   neuron_results nr{};
+  neuron_gradients ng{};
+  
 
   // simple help
   if (argc > 1 && (args[1] == "-h" || args[1] == "--help")) {
@@ -215,7 +251,9 @@ int main(int argc, char* argv[]) {
   nr.loss_slope         = loss_derivative(nr.prediction, te.target);     // Calculate how the loss changes with respect to the prediction.
   nr.weighted_sum_slope = weighted_sum_derivative(nr.loss_slope, 
                                                   nr.prediction_slope);  // Use the chain rule to calculate how the loss changes with respect to the weighted sum.
-  display_neuron(nr);
+  calculate_gradients(te, nr, ng);                                       // Calculate the gradients of the loss with respect to weight 1, weight 2 and bias.
+  display_neuron(nr);                                                    // Display the calculated neuron results.
+  display_gradients(ng);                                                 // Display the gradients for the trainable neuron parameters.
   
   return EXIT_SUCCESS;
 }
