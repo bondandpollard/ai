@@ -32,26 +32,33 @@ Function  : Neural Network Dataset Training.
                  - update the weights and bias using the gradients
                    and learning rate
 
-              5. Training feedback
-                 - monitor loss during training
-                 - observe how the neuron learns from multiple examples
+              5. Final evaluation
+                - apply the trained parameters to every example
+                - compare predictions with target values
+                - evaluate the learned OR relationship without changing the parameters
                  
             This program demonstrates how a single artificial neuron can learn a relationship from multiple training examples.
 
             The neuron does not store a separate answer for each example. Instead, it has one set of trainable parameters: two weights and a bias. 
             The same parameters are applied to each different pair of input values to calculate a weighted sum, which is then converted by the sigmoid function 
             into a prediction between 0 and 1.
+            
+            training_example  : contains the input values and target output for the current training example.
+            neuron_parameters : contains the weights and bias that represent what the neuron has learned.
+            neuron_results    : contains the calculations for the current training example, including the weighted sum, prediction, loss and slopes.
+            neuron_gradients  : contains the gradients calculated by backpropagation and used by gradient descent to update the neuron parameters.
 
             During training, the prediction is compared with the target value for the current example. Backpropagation calculates how the weights and bias 
             contributed to the prediction error, and gradient descent adjusts them. 
             Repeating this process across the whole dataset and over many epochs causes one set of parameters to develop that works across all the training examples.
-
+           
             In this program, the dataset represents the logical OR function. The neuron learns numerical parameter values that reproduce the OR relationship, 
             rather than the OR rule being explicitly programmed.
             
-            After 1000 epochs (complete passes through the dataset, the results are as follows:
+            In an example run starting with weight 1 = 0.8, weight 2 = -0.4 and bias = -0.1, after 1000 epochs (complete passes through
+            the dataset) the results are as follows:
             
-            NB: The data represents logical OR: 0 OR 0 = 0,0 OR 1 = 1, 1 OR 0 = 1, 1 OR 1 = 1.
+            NB: The data represents logical OR: 0 OR 0 = 0, 0 OR 1 = 1, 1 OR 0 = 1, 1 OR 1 = 1.
             
             Input 1     Input 2   Target    Prediction
             0           0         0         0.136448
