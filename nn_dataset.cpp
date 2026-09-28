@@ -35,6 +35,19 @@ Function  : Neural Network Dataset Training.
               5. Training feedback
                  - monitor loss during training
                  - observe how the neuron learns from multiple examples
+                 
+            This program demonstrates how a single artificial neuron can learn a relationship from multiple training examples.
+
+            The neuron does not store a separate answer for each example. Instead, it has one set of trainable parameters: two weights and a bias. 
+            The same parameters are applied to each different pair of input values to calculate a weighted sum, which is then converted by the sigmoid function 
+            into a prediction between 0 and 1.
+
+            During training, the prediction is compared with the target value for the current example. Backpropagation calculates how the weights and bias 
+            contributed to the prediction error, and gradient descent adjusts them. 
+            Repeating this process across the whole dataset and over many epochs causes one set of parameters to develop that works across all the training examples.
+
+            In this program, the dataset represents the logical OR function. The neuron learns numerical parameter values that reproduce the OR relationship, 
+            rather than the OR rule being explicitly programmed.
               
 Author    : Ian Bond
 Date      : 28 September 2026
