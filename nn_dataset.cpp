@@ -48,6 +48,17 @@ Function  : Neural Network Dataset Training.
 
             In this program, the dataset represents the logical OR function. The neuron learns numerical parameter values that reproduce the OR relationship, 
             rather than the OR rule being explicitly programmed.
+            
+            After 1000 epochs (complete passes through the dataset, the results are as follows:
+            
+            NB: The data represents logical OR: 0 OR 0 = 0,0 OR 1 = 1, 1 OR 0 = 1, 1 OR 1 = 1.
+            
+            Input 1     Input 2   Target    Prediction
+            0           0         0         0.136448
+            0           1         1         0.916753
+            1           0         1         0.917035
+            1           1         1         0.998704
+            
               
 Author    : Ian Bond
 Date      : 28 September 2026
@@ -371,7 +382,9 @@ void evaluate_dataset(const std::vector<training_example>& training_data,
   neuron_results nr{};
 
   std::cout << std::endl << "FINAL EVALUATION" << std::endl;
-
+  
+  display_parameters(np);
+  
   for (const training_example& te : training_data) {
 
     std::cout << std::endl << "EVALUATION EXAMPLE" << std::endl;
