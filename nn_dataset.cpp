@@ -388,6 +388,9 @@ int main(int argc, char* argv[]) {
               
     // Process each training example in the dataset.
     // One complete pass through the dataset constitutes one epoch.
+    
+    // te, nr and ng represent the current training example and its temporary
+    // working data. np persists across all training examples and epochs.
     for (const training_example& te : training_data) {
       
       std::cout << std::endl << "TRAINING EXAMPLE" << std::endl;
@@ -395,6 +398,15 @@ int main(int argc, char* argv[]) {
       
       // -----------------------------------------------------------------------------
       // FORWARD PASS
+      //
+      // Read:
+      //   te - current training example
+      //   np - current neuron parameters
+      //
+      // Update:
+      //   nr - weighted sum, prediction and loss for the current training example
+      //
+      // No neuron parameters are changed during the forward pass.
       // -----------------------------------------------------------------------------
       std::cout << std::endl << "FORWARD PASS" << std::endl;
       forward_pass(te, np, nr);                                            // Perform the forward pass for the current training example using the current neuron parameters.
@@ -402,6 +414,16 @@ int main(int argc, char* argv[]) {
       
       // -----------------------------------------------------------------------------
       // BACKPROPAGATION
+      //
+      // Read:
+      //   te - current training example
+      //   nr - prediction calculated by the forward pass
+      //
+      // Update:
+      //   nr - loss slope, prediction slope and weighted sum slope
+      //   ng - gradients for weight 1, weight 2 and bias
+      //
+      // No neuron parameters are changed during backpropagation.
       // -----------------------------------------------------------------------------
       std::cout << std::endl << "BACKPROPAGATION" << std::endl;
       backpropagate(te, nr, ng);                                           // Backpropagate the current prediction error and calculate parameter gradients.
@@ -411,6 +433,18 @@ int main(int argc, char* argv[]) {
       // -----------------------------------------------------------------------------
       // GRADIENT DESCENT
       //
+      // Read:
+      //   nr - current loss, saved for comparison after the parameter update
+      //   np - current weights and bias
+      //   ng - gradients calculated by backpropagation
+      //   learning_rate - controls the size of the parameter update
+      //
+      // Update:
+      //   previous_loss - stores the loss before the parameter update
+      //   np - weights and bias
+      //
+      // This is the stage where the neuron actually learns by changing its
+      // trainable parameters.
       // Adjust the weights and bias in the direction that reduces the loss.
       // The gradient points towards increasing loss, so gradient descent
       // subtracts the gradient, scaled by the learning rate.
@@ -423,6 +457,15 @@ int main(int argc, char* argv[]) {
       // -----------------------------------------------------------------------------
       // FEEDBACK (FORWARD PASS AFTER UPDATE)
       //
+      // Read:
+      //   te - same current training example
+      //   np - newly updated neuron parameters
+      //
+      // Update:
+      //   nr - weighted sum, prediction and loss recalculated using
+      //        the updated neuron parameters
+      //
+      // This allows the loss before and after the parameter update to be compared.
       // Run the forward pass again using the updated weights and bias.
       // With a suitable learning rate, the updated parameters should produce
       // a lower loss for the current training example.
