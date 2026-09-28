@@ -397,7 +397,7 @@ int main(int argc, char* argv[]) {
       // FORWARD PASS
       // -----------------------------------------------------------------------------
       std::cout << std::endl << "FORWARD PASS" << std::endl;
-      forward_pass(te, np, nr);
+      forward_pass(te, np, nr);                                            // Perform the forward pass for the current training example using the current neuron parameters.
       display_forward_pass(nr);
       
       // -----------------------------------------------------------------------------
