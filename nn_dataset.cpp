@@ -308,7 +308,7 @@ void set_neuron_parameters(neuron_parameters& np){
 }
 
 void display_training_example(const training_example& te) {
-  
+   
   std::cout << "Input 1 = "
             << te.input_1 << std::endl;
 
@@ -321,6 +321,8 @@ void display_training_example(const training_example& te) {
 
 void display_forward_pass(const neuron_results& nr) {
 
+  std::cout << std::endl << "FORWARD PASS" << std::endl;
+  
   std::cout << "Weighted Sum = "
             << nr.weighted_sum << std::endl;
 
@@ -332,6 +334,8 @@ void display_forward_pass(const neuron_results& nr) {
 }
 
 void display_backpropagation(const neuron_results& nr) {
+
+  std::cout << std::endl << "BACKPROPAGATION" << std::endl;
 
   std::cout << "Loss Slope = "
             << nr.loss_slope << std::endl;
@@ -355,10 +359,29 @@ void display_gradients(const neuron_gradients& ng) {
 
 void display_parameters(const neuron_parameters& np) {
 
-  std::cout << "PARAMETERS:" << std::endl;
+  std::cout << std::endl << "PARAMETER VALUES" << std::endl;
   std::cout << "Weight 1 = " << np.weight_1 << std::endl;
   std::cout << "Weight 2 = " << np.weight_2 << std::endl;
   std::cout << "Bias = " << np.bias << std::endl;
+}
+
+void evaluate_dataset(const std::vector<training_example>& training_data,
+                      const neuron_parameters& np) {
+
+  neuron_results nr{};
+
+  std::cout << std::endl << "FINAL EVALUATION" << std::endl;
+
+  for (const training_example& te : training_data) {
+
+    std::cout << std::endl << "EVALUATION EXAMPLE" << std::endl;
+
+    display_training_example(te);
+
+    forward_pass(te, np, nr);
+
+    display_forward_pass(nr);
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -370,8 +393,7 @@ int main(int argc, char* argv[]) {
   neuron_results nr{};             // Forward pass and backpropagation calculation results
   neuron_gradients ng{};           // Gradients of loss with respect to each trainable parameter.
   double learning_rate = 0.1;      // Set the learning rate (eta), which controls the size of each gradient descent update to the weights and bias.
-  double previous_loss;            // Loss before the current parameter update, used to measure improvement.
-  int training_epochs = 10;        // Number of complete passes through the dataset.
+  int training_epochs = 1000;      // Number of complete passes through the dataset.
   
 
   // Display command-line help if requested.
@@ -389,9 +411,7 @@ int main(int argc, char* argv[]) {
   
   set_training_dataset(training_data);                                   // Set values for the training dataset.
   set_neuron_parameters(np);                                             // Set initial neuron parameters: weights and bias.
-  std::cout << std::endl << "INITIAL PARAMETER VALUES" << std::endl;
   display_parameters(np);                                                // Display the initial neuron parameters before training.    
-
 
   for (int epoch = 1; epoch <= training_epochs; ++epoch) {
 
@@ -421,7 +441,6 @@ int main(int argc, char* argv[]) {
       //
       // No neuron parameters are changed during the forward pass.
       // -----------------------------------------------------------------------------
-      std::cout << std::endl << "FORWARD PASS" << std::endl;
       forward_pass(te, np, nr);                                            // Perform the forward pass for the current training example using the current neuron parameters.
       display_forward_pass(nr);
       
@@ -438,7 +457,6 @@ int main(int argc, char* argv[]) {
       //
       // No neuron parameters are changed during backpropagation.
       // -----------------------------------------------------------------------------
-      std::cout << std::endl << "BACKPROPAGATION" << std::endl;
       backpropagate(te, nr, ng);                                           // Backpropagate the current prediction error and calculate parameter gradients.
       display_backpropagation(nr);                                         // Display the backpropagation calculation results.
       display_gradients(ng);                                               // Display the gradients for the trainable neuron parameters.
@@ -447,13 +465,11 @@ int main(int argc, char* argv[]) {
       // GRADIENT DESCENT
       //
       // Read:
-      //   nr - current loss, saved for comparison after the parameter update
       //   np - current weights and bias
       //   ng - gradients calculated by backpropagation
       //   learning_rate - controls the size of the parameter update
       //
       // Update:
-      //   previous_loss - stores the loss before the parameter update
       //   np - weights and bias
       //
       // This is the stage where the neuron actually learns by changing its
@@ -463,34 +479,21 @@ int main(int argc, char* argv[]) {
       // subtracts the gradient, scaled by the learning rate.
       // -----------------------------------------------------------------------------
       std::cout << std::endl << "GRADIENT DESCENT" << std::endl;
-      previous_loss = nr.loss;
       update_parameters(np, ng, learning_rate);                            // Update the weights and bias using gradient descent and the calculated gradients.                       
       display_parameters(np);                                              // Display the updated neuron parameters after the gradient descent step.    
 
-      // -----------------------------------------------------------------------------
-      // FEEDBACK (FORWARD PASS AFTER UPDATE)
-      //
-      // Read:
-      //   te - same current training example
-      //   np - newly updated neuron parameters
-      //
-      // Update:
-      //   nr - weighted sum, prediction and loss recalculated using
-      //        the updated neuron parameters
-      //
-      // This allows the loss before and after the parameter update to be compared.
-      // Run the forward pass again using the updated weights and bias.
-      // With a suitable learning rate, the updated parameters should produce
-      // a lower loss for the current training example.
-      // -----------------------------------------------------------------------------
-      std::cout << std::endl << "FORWARD PASS AFTER UPDATE" << std::endl;
-      forward_pass(te, np, nr);                                            // Perform another forward pass using the updated neuron parameters.
-      display_forward_pass(nr);                                            // Display results of the forward pass using the updated parameters.
-      std::cout << std::endl << "LOSS COMPARISON:" << std::endl;           // Compare the loss before and after updating the parameters for the current training example.
-      std::cout << "Previous Loss = " << previous_loss << std::endl;
-      std::cout << "New Loss = " << nr.loss << std::endl; 
     }
   }
+  
+  // -----------------------------------------------------------------------------
+  // FINAL EVALUATION
+  //
+  // Evaluate the trained neuron using every example in the dataset.
+  // The trained neuron parameters are not changed during evaluation.
+  // Only a forward pass is required.
+  // -----------------------------------------------------------------------------
+
+  evaluate_dataset(training_data, np);
   
   return EXIT_SUCCESS;
 }
