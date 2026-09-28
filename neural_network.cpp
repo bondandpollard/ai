@@ -1,8 +1,25 @@
 /*
 Program   : neural_network.cpp
 System    : ai
-Function  : Demonstration of a single artificial neuron.
+Function  : Demonstration of a single artificial neuron and one training step.
             An artificial neuron is a fundamental component of neural networks.
+            
+            The program demonstrates:
+
+              1. Forward propagation
+                 - calculate weighted sum
+                 - apply sigmoid activation
+                 - calculate prediction loss
+
+              2. Backpropagation
+                 - calculate loss slope
+                 - calculate prediction slope
+                 - apply the chain rule
+                 - calculate parameter gradients
+
+              3. Gradient descent
+                 - update the weights and bias using the gradients
+                   and learning rate
 
             Test Training Example
               input 1 : 1.0
@@ -18,8 +35,8 @@ Function  : Demonstration of a single artificial neuron.
               Weighted Sum                =  0.7
               Prediction (Sigmoid Output) =  0.668188
               Loss                        =  0.110099
-              Prediction Slope            =  0.221713
               Loss Slope                  = -0.663624
+              Prediction Slope            =  0.221713
               Weighted Sum Slope          = -0.147134
               Weight 1 Gradient           = -0.147134
               Weight 2 Gradient           =  0
@@ -178,10 +195,41 @@ void calc_gradients(const training_example& te,
   // dL/dz  = weighted sum slope
   // x1     = input 1
   // x2     = input 2
-
+  //
+  // Each weight gradient is multiplied by its corresponding input
+  // because that input determines how strongly the weight affects z.
+  //
+  // The bias gradient equals dL/dz because the bias is added directly
+  // to z: dz/db = 1.
+  
   ng.weight_1 = nr.weighted_sum_slope * te.input_1;
   ng.weight_2 = nr.weighted_sum_slope * te.input_2;
   ng.bias     = nr.weighted_sum_slope;
+}
+
+void update_parameters(neuron_parameters& np,
+                       const neuron_gradients& ng,
+                       double learning_rate) {
+
+  // Update the trainable neuron parameters using gradient descent.
+  //
+  // new parameter = old parameter - (learning rate * gradient)
+  //
+  // w1 = w1 - (eta * dL/dw1)
+  // w2 = w2 - (eta * dL/dw2)
+  // b  = b  - (eta * dL/db)
+  //
+  // eta = learning rate.
+  //
+  // The gradient points in the direction of increasing loss.
+  // Subtracting the gradient, scaled by the learning rate,
+  // moves the parameter in the direction of decreasing loss.
+  // The learning rate controls how large each update step is.
+
+
+  np.weight_1 -= learning_rate * ng.weight_1;
+  np.weight_2 -= learning_rate * ng.weight_2;
+  np.bias     -= learning_rate * ng.bias;
 }
 
 double prompt_double (const std::string& p_prompt) {
@@ -213,8 +261,8 @@ void display_neuron(const neuron_results& nr) {
   std::cout << "Weighted Sum = " << nr.weighted_sum << std::endl;
   std::cout << "Prediction (Sigmoid Output) = " << nr.prediction << std::endl;
   std::cout << "Loss = " << nr.loss << std::endl;
-  std::cout << "Prediction Slope = " << nr.prediction_slope << std::endl;
   std::cout << "Loss Slope = " << nr.loss_slope << std::endl;
+  std::cout << "Prediction Slope = " << nr.prediction_slope << std::endl;
   std::cout << "Weighted Sum Slope = " << nr.weighted_sum_slope << std::endl;
 }
 
@@ -228,6 +276,14 @@ void display_gradients(const neuron_gradients& ng) {
   std::cout << "Bias Gradient = " << ng.bias << std::endl;
 }
 
+void display_parameters(const neuron_parameters& np) {
+
+  std::cout << "PARAMETERS:" << std::endl;
+  std::cout << "Weight 1 = " << np.weight_1 << std::endl;
+  std::cout << "Weight 2 = " << np.weight_2 << std::endl;
+  std::cout << "Bias = " << np.bias << std::endl;
+}
+
 int main(int argc, char* argv[]) {
   // easy to use: args as vector<string>
   std::vector<std::string> args(argv, argv + argc);
@@ -235,6 +291,7 @@ int main(int argc, char* argv[]) {
   neuron_parameters np{};
   neuron_results nr{};
   neuron_gradients ng{};
+  double learning_rate = 0.1;   // Set the learning rate (eta), which controls the size of each gradient descent update to the weights and bias.
   
 
   // simple help
@@ -247,6 +304,10 @@ int main(int argc, char* argv[]) {
   set_training_example(te);                                              // Set values for the training example.
   
   set_neuron_parameters(np);                                             // Set initial neuron parameters: weights and bias.
+
+  // -----------------------------------------------------------------------------
+  // FORWARD PASS
+  // -----------------------------------------------------------------------------
   
   nr.weighted_sum       = calc_weighted_sum(te, np);                     // Calculate the weighted sum of the neuron's inputs.
   
@@ -255,18 +316,35 @@ int main(int argc, char* argv[]) {
                                                                          
   nr.loss               = calc_loss(nr.prediction, te.target);           // Calculate the loss as squared error (difference) between prediction and target.
   
+  // -----------------------------------------------------------------------------
+  // BACKPROPAGATION
+  // -----------------------------------------------------------------------------
+  
   nr.loss_slope         = calc_loss_slope(nr.prediction, te.target);     // Calculate how the loss changes with respect to the prediction.
   
   nr.prediction_slope   = calc_prediction_slope(nr.prediction);          // Calculate the prediction slope (dp/dz) using the sigmoid derivative.
   
   nr.weighted_sum_slope = calc_weighted_sum_slope(nr.loss_slope, 
                                              nr.prediction_slope);       // Use the chain rule to calculate how the loss changes with respect to the weighted sum.
+                                             
+  display_neuron(nr);                                                    // Display the calculated neuron results.
   
   calc_gradients(te, nr, ng);                                            // Calculate the gradients of the loss with respect to weight 1, weight 2 and bias.
   
-  display_neuron(nr);                                                    // Display the calculated neuron results.
-  
   display_gradients(ng);                                                 // Display the gradients for the trainable neuron parameters.
+  
+  // -----------------------------------------------------------------------------
+  // GRADIENT DESCENT
+  //
+  // Adjust the weights and bias in the direction that reduces the loss.
+  // The gradient points towards increasing loss, so gradient descent
+  // subtracts the gradient, scaled by the learning rate.
+  // -----------------------------------------------------------------------------
+  
+  update_parameters(np, ng, learning_rate);                               // Update the weights and bias using gradient descent and the calculated gradients.                       
+  
+  display_parameters(np);                                                 // Display the updated neuron parameters after the gradient descent step.      
+
   
   return EXIT_SUCCESS;
 }
