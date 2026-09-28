@@ -2,8 +2,8 @@
 Program   : nn_dataset.cpp
 System    : ai
 Function  : Neural Network Dataset Training.
-            Demonstration of training a single artificial neuron using
-            multiple training examples.
+            Demonstration of training a single artificial neuron to learn the
+            logical OR function from multiple training examples.
 
             The program builds on nn_neuron.cpp by introducing a dataset
             containing multiple input and target values. The neuron learns
