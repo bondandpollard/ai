@@ -116,7 +116,6 @@ double calc_weighted_sum(const training_example& te, const neuron_parameters& np
   return (te.input_1 * np.weight_1) + (te.input_2 * np.weight_2) + np.bias;
 }
 
-
 double calc_prediction(double weighted_sum) {
   // Calculate prediction by applying the sigmoid activation function.
   //
@@ -144,6 +143,21 @@ double calc_loss(double prediction, double target) {
   // A lower loss indicates a prediction closer to the target.
   
   return (target - prediction) * (target - prediction);
+}
+
+void forward_pass(const training_example& te, 
+                  const neuron_parameters& np, 
+                  neuron_results& nr) {
+                    
+  // Perform the forward pass using the current neuron parameters.
+  // Calculate the weighted sum, prediction and resulting loss.
+
+  nr.weighted_sum = calc_weighted_sum(te, np);             // Calculate the weighted sum of the neuron's inputs.
+  
+  nr.prediction = calc_prediction(nr.weighted_sum);        // Apply the sigmoid activation function to the weighted sum to return the 
+                                                           // prediction as a number between 0 and 1. 
+                                                                         
+  nr.loss = calc_loss(nr.prediction, te.target);           // Calculate the loss as squared error (difference) between prediction and target.
 }
 
 double calc_loss_slope(double prediction, double target) {
@@ -189,8 +203,8 @@ double calc_weighted_sum_slope(double loss_slope, double prediction_slope) {
 }
 
 void calc_gradients(const training_example& te,
-                         const neuron_results& nr,
-                         neuron_gradients& ng) {
+                    const neuron_results& nr,
+                    neuron_gradients& ng) {
 
   // Calculate the gradients of the loss with respect to
   // each trainable neuron parameter.
@@ -212,6 +226,23 @@ void calc_gradients(const training_example& te,
   ng.weight_1 = nr.weighted_sum_slope * te.input_1;
   ng.weight_2 = nr.weighted_sum_slope * te.input_2;
   ng.bias     = nr.weighted_sum_slope;
+}
+
+void backpropagate(const training_example& te,
+                   neuron_results& nr,
+                   neuron_gradients& ng) {
+                     
+  // Perform backpropagation for the current prediction error.
+  // Calculate the slopes and parameter gradients needed for gradient descent.
+
+  nr.loss_slope = calc_loss_slope(nr.prediction, te.target);  // Calculate how the loss changes with respect to the prediction.
+
+  nr.prediction_slope = calc_prediction_slope(nr.prediction); // Calculate the prediction slope (dp/dz) using the sigmoid derivative.
+
+  nr.weighted_sum_slope = calc_weighted_sum_slope(nr.loss_slope, nr.prediction_slope); // Use the chain rule to calculate how the loss changes 
+                                                                                       // with respect to the weighted sum.
+
+  calc_gradients(te, nr, ng); // Calculate the gradients of the loss with respect to weight 1, weight 2 and bias.
 }
 
 void update_parameters(neuron_parameters& np,
@@ -254,7 +285,7 @@ double prompt_double (const std::string& p_prompt) {
 
 void set_training_example(training_example& te){
   te.input_1   = prompt_double("Enter Input 1");
-  te.input_2   = prompt_double("Enter  Input 2");
+  te.input_2   = prompt_double("Enter Input 2");
   te.target    = prompt_double("Enter Target");
 }
 
@@ -307,30 +338,31 @@ void display_parameters(const neuron_parameters& np) {
 }
 
 int main(int argc, char* argv[]) {
-  // easy to use: args as vector<string>
-  std::vector<std::string> args(argv, argv + argc);
+  std::vector<std::string> 
+    args(argv, argv + argc);       // Store command-line arguments as strings for easier processing
   training_example te{};           // Input values and target used for training.
-  neuron_parameters np{};          // Weights biases (trainable parameters)
+  neuron_parameters np{};          // Weights and bias (trainable parameters)
   neuron_results nr{};             // Forward pass and backpropagation calculation results
   neuron_gradients ng{};           // Gradients of loss with respect to each trainable parameter.
   double learning_rate = 0.1;      // Set the learning rate (eta), which controls the size of each gradient descent update to the weights and bias.
   double previous_loss;            // Loss before the current parameter update, used to measure improvement.
-  int training_iterations = 1000;    // Number of training iterations to perform.
+  int training_iterations = 10;    // Number of training iterations to perform.
   
 
-  // simple help
+  // Display command-line help if requested.
   if (argc > 1 && (args[1] == "-h" || args[1] == "--help")) {
     std::cout << "Usage: " << args[0] << " [options]" << std::endl
               << "  [-h | --help]" << std::endl;
     return EXIT_SUCCESS;
   }
 
+  // -----------------------------------------------------------------------------
+  // INITIALIZE
+  // -----------------------------------------------------------------------------
+  
   set_training_example(te);                                              // Set values for the training example.
-  
   set_neuron_parameters(np);                                             // Set initial neuron parameters: weights and bias.
-  
   std::cout << std::endl << "INITIAL PARAMETER VALUES" << std::endl;
-  
   display_parameters(np);                                                // Display the initial neuron parameters before training.    
 
   // -----------------------------------------------------------------------------
@@ -338,14 +370,7 @@ int main(int argc, char* argv[]) {
   // -----------------------------------------------------------------------------
   
   std::cout << std::endl << "FORWARD PASS" << std::endl;
-  
-  nr.weighted_sum       = calc_weighted_sum(te, np);                     // Calculate the weighted sum of the neuron's inputs.
-  
-  nr.prediction         = calc_prediction(nr.weighted_sum);              // Apply the sigmoid activation function to the weighted sum to return the 
-                                                                         // prediction as a number between 0 and 1. 
-                                                                         
-  nr.loss               = calc_loss(nr.prediction, te.target);           // Calculate the loss as squared error (difference) between prediction and target.
-  
+  forward_pass(te, np, nr);                                              // Perform the initial forward pass using the starting neuron parameters.
   display_forward_pass(nr);                                              // Display results of initial forward pass.
   
   // Repeat backpropagation, gradient descent and feedback
@@ -361,18 +386,8 @@ int main(int argc, char* argv[]) {
     // -----------------------------------------------------------------------------
   
     std::cout << std::endl << "BACKPROPAGATION" << std::endl;
-  
-    nr.loss_slope         = calc_loss_slope(nr.prediction, te.target);   // Calculate how the loss changes with respect to the prediction.
-  
-    nr.prediction_slope   = calc_prediction_slope(nr.prediction);        // Calculate the prediction slope (dp/dz) using the sigmoid derivative.
-  
-    nr.weighted_sum_slope = calc_weighted_sum_slope(nr.loss_slope, 
-                                             nr.prediction_slope);       // Use the chain rule to calculate how the loss changes with respect to the weighted sum.
-                                             
+    backpropagate(te, nr, ng);                                           // Backpropagate the current prediction error and calculate parameter gradients.
     display_backpropagation(nr);                                         // Display the backpropagation calculation results.
-  
-    calc_gradients(te, nr, ng);                                          // Calculate the gradients of the loss with respect to weight 1, weight 2 and bias.
-  
     display_gradients(ng);                                               // Display the gradients for the trainable neuron parameters.
   
     // -----------------------------------------------------------------------------
@@ -384,11 +399,8 @@ int main(int argc, char* argv[]) {
     // -----------------------------------------------------------------------------
   
     std::cout << std::endl << "GRADIENT DESCENT" << std::endl;
-  
     previous_loss = nr.loss;
-  
     update_parameters(np, ng, learning_rate);                            // Update the weights and bias using gradient descent and the calculated gradients.                       
-  
     display_parameters(np);                                              // Display the updated neuron parameters after the gradient descent step.    
 
     // -----------------------------------------------------------------------------
@@ -397,19 +409,14 @@ int main(int argc, char* argv[]) {
     // Run the forward pass again using the updated weights and bias.
     // If gradient descent has moved the parameters in the correct direction,
     // the new loss should be lower than the previous loss.
+    // With a suitable learning rate, the updated parameters should produce
+    // a lower loss than before the gradient descent step.
     // -----------------------------------------------------------------------------
 
     std::cout << std::endl << "FORWARD PASS" << std::endl;
-  
-    nr.weighted_sum = calc_weighted_sum(te, np);
-
-    nr.prediction = calc_prediction(nr.weighted_sum);
-
-    nr.loss = calc_loss(nr.prediction, te.target);  
-    
+    forward_pass(te, np, nr);                                            // Perform another forward pass using the updated neuron parameters.
     display_forward_pass(nr);                                            // Display results of the forward pass using the updated parameters.
-
-    std::cout << std::endl << "LOSS COMPARISON:" << std::endl;
+    std::cout << std::endl << "LOSS COMPARISON:" << std::endl;           // Compare the loss before and after the current training iteration.
     std::cout << "Previous Loss = " << previous_loss << std::endl;
     std::cout << "New Loss = " << nr.loss << std::endl;
   }
