@@ -1,7 +1,8 @@
 /*
-Program   : neural_network.cpp
+Program   : nn_neuron.cpp
 System    : ai
-Function  : Demonstration of training a single artificial neuron using
+Function  : Neural Network Single Neuron.
+            Demonstration of training a single artificial neuron using
             backpropagation and gradient descent.
             An artificial neuron is a fundamental component of neural networks.
             
@@ -356,6 +357,8 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
   }
 
+  std::cout << "Neural Network - Single Neuron Demonstration" << std::endl;
+  
   // -----------------------------------------------------------------------------
   // INITIALIZE
   // -----------------------------------------------------------------------------
