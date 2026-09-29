@@ -81,6 +81,7 @@ Version   Log/Ref   Date        Author        Description
 #include <cstdlib>   // EXIT_SUCCESS / EXIT_FAILURE
 #include <iostream>
 #include <limits>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -535,15 +536,43 @@ int main(int argc, char* argv[]) {
   double learning_rate = 0.1;      // Set the learning rate (eta), which controls the size of each gradient descent update to the weights and bias.
   int training_epochs = 1000;      // Number of complete passes through the dataset.
   
+  // Check command line arguments
+  if (argc > 1) {
+  
+    // Display command-line help if requested.
+    if (args[1] == "-h" || args[1] == "--help") {
+      std::cout << "Usage: " << args[0] << " [number of epochs]" << std::endl
+                << "  [-h | --help]" << std::endl;
+      return EXIT_SUCCESS;
+    }
+    
+    // Set training_epochs from command line argument if a number is provided
+    try {
+      std::size_t pos = 0;
 
-  // Display command-line help if requested.
-  if (argc > 1 && (args[1] == "-h" || args[1] == "--help")) {
-    std::cout << "Usage: " << args[0] << " [options]" << std::endl
-              << "  [-h | --help]" << std::endl;
-    return EXIT_SUCCESS;
+      training_epochs = std::stoi(args[1], &pos);
+
+      // Ensure the whole argument was a valid integer.
+      if (pos != args[1].size()) {
+        throw std::invalid_argument("invalid integer");
+      }
+
+      if (training_epochs <= 0) {
+        throw std::invalid_argument("epochs must be greater than zero");
+      }
+    }
+    catch (const std::invalid_argument&) {
+      std::cerr << "Error: epochs must be a positive integer." << std::endl;
+      return EXIT_FAILURE;
+    }
+    catch (const std::out_of_range&) {
+      std::cerr << "Error: epochs value is too large." << std::endl;
+      return EXIT_FAILURE;
+    }
   }
-
+  
   std::cout << "Neural Network Logical XOR Dataset Training" << std::endl;
+  std::cout << training_epochs << " training epochs." << std::endl;
   
   // -----------------------------------------------------------------------------
   // INITIALIZE
@@ -637,4 +666,3 @@ int main(int argc, char* argv[]) {
   
   return EXIT_SUCCESS;
 }
-
