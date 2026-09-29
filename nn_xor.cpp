@@ -3,7 +3,7 @@ Program   : nn_xor.cpp
 System    : ai
 Function  : Neural Network Logical XOR Dataset Training.
             Demonstration of training a single artificial neuron to learn the
-            logical OR function from multiple training examples.
+            logical xOR function from multiple training examples.
 
             The program builds on nn_neuron.cpp by introducing a dataset
             containing multiple input and target values. The neuron learns
@@ -53,28 +53,28 @@ Function  : Neural Network Logical XOR Dataset Training.
             Backpropagation calculates how the loss changes with respect to each weight and the bias, and gradient descent adjusts those parameters.
             Repeating this process across the whole dataset and over many epochs causes one set of parameters to develop that works across all the training examples.
            
-            In this program, the training_example dataset represents the logical OR function. 
+            In this program, the training_example dataset represents the logical XOR (Exclusive OR) function. 
             The neuron learns numerical parameter values that reproduce the OR relationship, rather than the OR rule being explicitly programmed.
             
             In an example run starting with weight 1 = 0.8, weight 2 = -0.4 and bias = -0.1, after 1000 epochs (complete passes through
             the dataset) the results are as follows:
             
-            NB: The data represents logical OR: 0 OR 0 = 0, 0 OR 1 = 1, 1 OR 0 = 1, 1 OR 1 = 1.
+            NB: The data represents logical XOR: 0 XOR 0 = 0, 0 XOR 1 = 1, 1 XOR 0 = 1, 1 XOR 1 = 0.
             
             Input 1     Input 2   Target    Prediction
-            0           0         0         0.136448
-            0           1         1         0.916753
-            1           0         1         0.917035
-            1           1         1         0.998704
+            0           0         0         
+            0           1         1         
+            1           0         1         
+            1           1         0         
             
               
 Author    : Ian Bond
-Date      : 28 September 2026
+Date      : 29 September 2026
 
 MODIFICATION HISTORY
 Version   Log/Ref   Date        Author        Description
 ==========================================================================================================
-1.00      IAB001    28/09/2026  Ian Bond      Created
+1.00      IAB001    29/09/2026  Ian Bond      Created
 */
 
 #include <cmath>
@@ -355,19 +355,19 @@ double prompt_double (const std::string& p_prompt) {
 
 void set_training_dataset(std::vector<training_example>& training_data) {
   
-  // Create the training dataset for the logical OR function.
+  // Create the training dataset for the logical XOR function.
   //
   // x1  x2  target
   //  0   0     0
   //  0   1     1
   //  1   0     1
-  //  1   1     1
+  //  1   1     0
 
   training_data = {
     {0.0, 0.0, 0.0},
     {0.0, 1.0, 1.0},
     {1.0, 0.0, 1.0},
-    {1.0, 1.0, 1.0}
+    {1.0, 1.0, 0.0}
   };
 }
 
