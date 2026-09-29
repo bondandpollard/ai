@@ -585,7 +585,7 @@ int main(int argc, char* argv[]) {
   for (int epoch = 1; epoch <= training_epochs; ++epoch) {
 
     std::cout << std::endl
-              << "TRAINING EPOCH " << epoch
+              << "TRAINING EPOCH " << epoch << " of " << training_epochs
               << std::endl;
               
     // Process each training example in the dataset.
