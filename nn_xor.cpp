@@ -66,6 +66,18 @@ Function  : Neural Network Logical XOR Dataset Training.
             layer containing multiple neurons, allowing the network to learn
             the XOR relationship.      
             
+Historical note:
+
+            In 1969, Marvin Minsky and Seymour Papert published "Perceptrons:
+            An Introduction to Computational Geometry", a mathematical analysis of
+            perceptron capabilities and limitations.
+
+            A single-layer perceptron can only solve linearly separable classification
+            problems. Logical XOR is not linearly separable, so it cannot be represented
+            by a single perceptron with one linear decision boundary.
+
+            The XOR example therefore became a classic demonstration of the limitations
+            of single-layer perceptrons and of the need for multilayer neural networks.
               
 Author    : Ian Bond
 Date      : 29 September 2026
@@ -515,15 +527,11 @@ void evaluate_dataset(const std::vector<training_example>& training_data,
   
   display_parameters(np);
   
+  std::cout << std::endl << "PREDICTIONS:" << std::endl;
+  
   for (const training_example& te : training_data) {
-
-    std::cout << std::endl << "EVALUATION EXAMPLE" << std::endl;
-
-    display_training_example(te);
-
     forward_pass(te, np, nr);
-
-    display_forward_pass(nr);
+    std::cout << "[" << te.input_1 << ", " << te.input_2 << "] target " << te.target << " -> " << nr.prediction << std::endl;  
   }
 }
 

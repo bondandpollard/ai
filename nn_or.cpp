@@ -513,15 +513,11 @@ void evaluate_dataset(const std::vector<training_example>& training_data,
   
   display_parameters(np);
   
+  std::cout << std::endl << "PREDICTIONS:" << std::endl;
+  
   for (const training_example& te : training_data) {
-
-    std::cout << std::endl << "EVALUATION EXAMPLE" << std::endl;
-
-    display_training_example(te);
-
     forward_pass(te, np, nr);
-
-    display_forward_pass(nr);
+    std::cout << "[" << te.input_1 << ", " << te.input_2 << "] target " << te.target << " -> " << nr.prediction << std::endl;  
   }
 }
 
