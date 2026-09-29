@@ -17,14 +17,15 @@ Function  : Neural Network Dataset Training.
                  - process each training example
                  - repeat training over multiple epochs
 
-              2. Forward propagation
+              2. Forward propagation (Forward pass)
                  - calculate weighted sum
-                 - apply sigmoid activation
-                 - calculate prediction loss
+                 - apply sigmoid activation to derive the prediction value
+                 - calculate loss from prediction and target
 
               3. Backpropagation
                  - calculate loss slope
                  - calculate prediction slope
+                 - calculate weighted sum slope
                  - apply the chain rule
                  - calculate parameter gradients
 
@@ -48,12 +49,12 @@ Function  : Neural Network Dataset Training.
             neuron_results    : contains the calculations for the current training example, including the weighted sum, prediction, loss and slopes.
             neuron_gradients  : contains the gradients calculated by backpropagation and used by gradient descent to update the neuron parameters.
 
-            During training, the prediction is compared with the target value for the current example. Backpropagation calculates how the weights and bias 
-            contributed to the prediction error, and gradient descent adjusts them. 
+            During training, the prediction is compared with the target value for the current example. 
+            Backpropagation calculates how the loss changes with respect to each weight and the bias, and gradient descent adjusts those parameters.
             Repeating this process across the whole dataset and over many epochs causes one set of parameters to develop that works across all the training examples.
            
-            In this program, the dataset represents the logical OR function. The neuron learns numerical parameter values that reproduce the OR relationship, 
-            rather than the OR rule being explicitly programmed.
+            In this program, the training_example dataset represents the logical OR function. 
+            The neuron learns numerical parameter values that reproduce the OR relationship, rather than the OR rule being explicitly programmed.
             
             In an example run starting with weight 1 = 0.8, weight 2 = -0.4 and bias = -0.1, after 1000 epochs (complete passes through
             the dataset) the results are as follows:
@@ -84,7 +85,17 @@ Version   Log/Ref   Date        Author        Description
 #include <vector>
 
 // Structure holding one training example:
-// input values and the expected target output.
+//
+// Input values and the expected target output.
+//
+// Each instance contains the input values presented to the neuron and the
+// expected target output for those inputs.
+//
+// During training, one training_example is processed at a time.
+// Function forward_pass() uses input_1 and input_2 with the current neuron parameters
+// to calculate a prediction (stored in neuron_results). 
+//
+// The prediction is then compared with target to calculate the loss used during backpropagation.
 struct training_example {
   double input_1;
   double input_2;
@@ -92,34 +103,70 @@ struct training_example {
 };
 
 // Structure holding the weights and bias (trainable parameters).
+//
+// The neuron_parameters instance persists throughout training.
+// Its weights and bias represent what the neuron has learned so far.
+//
+// For each training example, forward_pass() combines the current input values
+// with these parameters to calculate neuron_results, including the weighted
+// sum, prediction (sigmoid output) and loss.
+//
+// NB: nr.prediction is the neuron's actual output, which is compared
+// with the target output during training.
+//
+// Backpropagation and gradient descent then adjust these parameters so that
+// future predictions should move closer to the target values.
 struct neuron_parameters {
   double weight_1;
   double weight_2;
   double bias;
 };
 
-// Structure holding the gradients calculated by backpropagation
-// and used by gradient descent.
-// Each value represents how the loss changes with respect
-// to the corresponding trainable parameter.
+// Structure holding the gradients calculated by backpropagation.
+//
+// Each gradient represents how the loss changes with respect to one
+// trainable neuron parameter:
+//
+//   weight_1 - dL/dw1
+//   weight_2 - dL/dw2
+//   bias     - dL/db
+//
+// The sign and size of each gradient indicate the direction and rate at
+// which the loss changes as the corresponding parameter changes.
+//
+// Gradient descent uses these values, together with the learning rate,
+// to adjust the neuron parameters in the direction that reduces the loss.
 struct neuron_gradients {
   double weight_1;    // dL/dw1
   double weight_2;    // dL/dw2
   double bias;        // dL/db
 };
 
-// Structure holding the calculated neuron data.
+// Structure holding calculated neuron results for the current training example.
+//
+// The forward pass stores:
+//   weighted_sum - z, calculated from the current inputs, weights and bias
+//   prediction   - p, sigmoid output between 0 and 1
+//   loss         - L, squared error between prediction and target
+//
+// Backpropagation then stores the corresponding slopes:
+//   loss_slope         - dL/dp, how loss changes with prediction
+//   prediction_slope   - dp/dz, how prediction changes with weighted sum
+//   weighted_sum_slope - dL/dz, how loss changes with weighted sum
+//
+// These values are temporary working results for the current example.
+// They are recalculated as each training example is processed.
 struct neuron_results {
   double weighted_sum;
   double weighted_sum_slope;
-  double prediction;      // sigmoid output
+  double prediction;      // Sigmoid output between 0 and 1, derived from the current input values and neuron parameters.
   double prediction_slope;
   double loss;
   double loss_slope;
-
 };
 
 double calc_weighted_sum(const training_example& te, const neuron_parameters& np) {
+  
   // Calculate the weighted sum of the neuron's inputs.
   //
   // z = (x1 * w1) + (x2 * w2) + b
@@ -135,6 +182,7 @@ double calc_weighted_sum(const training_example& te, const neuron_parameters& np
 }
 
 double calc_prediction(double weighted_sum) {
+  
   // Calculate prediction by applying the sigmoid activation function.
   //
   // p = 1 / (1 + e^(-z))
@@ -146,11 +194,11 @@ double calc_prediction(double weighted_sum) {
   // Returns a value between 0 and 1.
   
   return 1 / (1 + std::exp(-weighted_sum));
-
 }
 
 double calc_loss(double prediction, double target) {
-  // Calculate loss as the squared error between prediction and target.
+  
+  // Calculate loss as the squared difference between prediction and target.
   //
   // L = (t - p)^2
   //
@@ -175,10 +223,11 @@ void forward_pass(const training_example& te,
   nr.prediction = calc_prediction(nr.weighted_sum);        // Apply the sigmoid activation function to the weighted sum to return the 
                                                            // prediction as a number between 0 and 1. 
                                                                          
-  nr.loss = calc_loss(nr.prediction, te.target);           // Calculate the loss as squared error (difference) between prediction and target.
+  nr.loss = calc_loss(nr.prediction, te.target);           // Calculate the loss as squared difference between prediction and target.
 }
 
 double calc_loss_slope(double prediction, double target) {
+  
   // Calculate loss slope as the derivative of the squared error loss.
   //
   // dL/dp = 2 * (p - t)
@@ -192,6 +241,7 @@ double calc_loss_slope(double prediction, double target) {
 }
 
 double calc_prediction_slope(double prediction) {
+  
   // Calculate prediction slope as the derivative of the sigmoid function.
   //
   // dp/dz = p * (1 - p)
@@ -207,6 +257,7 @@ double calc_prediction_slope(double prediction) {
 }
 
 double calc_weighted_sum_slope(double loss_slope, double prediction_slope) {
+  
   // Calculate weighted sum slope as the derivative of the loss with respect to the weighted sum.
   //
   // dL/dz = (dL/dp) * (dp/dz)
@@ -282,14 +333,15 @@ void update_parameters(neuron_parameters& np,
   // moves the parameter in the direction of decreasing loss.
   // The learning rate controls how large each update step is.
 
-
   np.weight_1 -= learning_rate * ng.weight_1;
   np.weight_2 -= learning_rate * ng.weight_2;
   np.bias     -= learning_rate * ng.bias;
 }
 
 double prompt_double (const std::string& p_prompt) {
+  
   // Prompt user to enter a double (floating point) number.
+  
   double value;
   std::cout << p_prompt << ":";
   while (!(std::cin >> value)) {   // handle bad input   
@@ -302,7 +354,7 @@ double prompt_double (const std::string& p_prompt) {
 }
 
 void set_training_dataset(std::vector<training_example>& training_data) {
-
+  
   // Create the training dataset for the logical OR function.
   //
   // x1  x2  target
@@ -320,13 +372,28 @@ void set_training_dataset(std::vector<training_example>& training_data) {
 }
 
 void set_neuron_parameters(neuron_parameters& np){
+
+  // Prompt the user to enter the initial values for the neuron's
+  // trainable parameters: two weights and a bias.
+  //
+  // These values provide the starting point for training.
+  // During gradient descent, the parameters are repeatedly adjusted
+  // using the calculated gradients so that the neuron's predictions
+  // move closer to the target values.
+  
   np.weight_1  = prompt_double("Enter Weight 1");
   np.weight_2  = prompt_double("Enter Weight 2");
   np.bias      = prompt_double("Enter Bias");
 }
 
 void display_training_example(const training_example& te) {
-   
+  
+  // Display the current training example.
+  //
+  // input_1 and input_2 are the values presented to the neuron.
+  // target is the expected output that the neuron's prediction
+  // will be compared with during training.
+  
   std::cout << "Input 1 = "
             << te.input_1 << std::endl;
 
@@ -338,6 +405,14 @@ void display_training_example(const training_example& te) {
 }
 
 void display_forward_pass(const neuron_results& nr) {
+  // Display the calculated results of the forward pass for the current
+  // training example.
+  //
+  // weighted_sum - result of combining the input values with the current
+  //                weights and bias
+  // prediction   - sigmoid output between 0 and 1 produced from weighted_sum
+  // loss         - squared error showing how far the prediction is from
+  //                the target value
 
   std::cout << std::endl << "FORWARD PASS" << std::endl;
   
@@ -352,6 +427,18 @@ void display_forward_pass(const neuron_results& nr) {
 }
 
 void display_backpropagation(const neuron_results& nr) {
+  
+  // Display the derivative values calculated during backpropagation.
+  //
+  // loss_slope         - dL/dp: how the loss changes as the prediction changes
+  // prediction_slope   - dp/dz: how the prediction changes as the weighted sum changes
+  // weighted_sum_slope - dL/dz: how the loss changes as the weighted sum changes
+  //
+  // The weighted_sum_slope is obtained by applying the chain rule:
+  //   dL/dz = (dL/dp) * (dp/dz)
+  //
+  // These values are then used to calculate the gradients for the
+  // neuron's trainable parameters.
 
   std::cout << std::endl << "BACKPROPAGATION" << std::endl;
 
@@ -366,8 +453,18 @@ void display_backpropagation(const neuron_results& nr) {
 }
 
 void display_gradients(const neuron_gradients& ng) {
-  // Display how the loss changes with respect to each
-  // trainable neuron parameter.
+  
+  // Display the parameter gradients calculated by backpropagation.
+  //
+  // Each gradient shows how the loss changes with respect to one
+  // trainable neuron parameter:
+  //
+  //   weight_1 gradient - dL/dw1
+  //   weight_2 gradient - dL/dw2
+  //   bias gradient     - dL/db
+  //
+  // The sign and size of each gradient determine how gradient descent
+  // will adjust the corresponding parameter to reduce the loss.
   
   std::cout << "GRADIENTS:" << std::endl;
   std::cout << "Weight 1 Gradient = " << ng.weight_1 << std::endl;
@@ -377,6 +474,15 @@ void display_gradients(const neuron_gradients& ng) {
 
 void display_parameters(const neuron_parameters& np) {
 
+  // Display the neuron's current trainable parameter values.
+  //
+  // weight_1 and weight_2 control the influence of the two input values.
+  // bias shifts the weighted sum independently of the inputs.
+  //
+  // These parameters persist throughout training and are adjusted by
+  // gradient descent. Their current values represent what the neuron
+  // has learned so far.
+
   std::cout << std::endl << "PARAMETER VALUES" << std::endl;
   std::cout << "Weight 1 = " << np.weight_1 << std::endl;
   std::cout << "Weight 2 = " << np.weight_2 << std::endl;
@@ -385,6 +491,20 @@ void display_parameters(const neuron_parameters& np) {
 
 void evaluate_dataset(const std::vector<training_example>& training_data,
                       const neuron_parameters& np) {
+
+  // Evaluate the trained neuron using every example in the dataset.
+  //
+  // The final trained weights and bias are displayed once, then the same
+  // neuron parameters are applied to each training example using a forward pass.
+  //
+  // For each example, the neuron calculates a new weighted sum, prediction
+  // and loss from the example inputs and the trained parameters.
+  //
+  // No backpropagation or gradient descent is performed during evaluation,
+  // so the neuron parameters are not changed.
+  //
+  // This shows how well the final trained neuron reproduces the logical OR
+  // relationship represented by the dataset.
 
   neuron_results nr{};
 
