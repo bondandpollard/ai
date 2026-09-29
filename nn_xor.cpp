@@ -2,13 +2,15 @@
 Program   : nn_xor.cpp
 System    : ai
 Function  : Neural Network Logical XOR Dataset Training.
-            Demonstration of training a single artificial neuron to learn the
-            logical xOR function from multiple training examples.
+            Demonstration of attempting to train a single artificial neuron
+            using the logical XOR function.
 
-            The program builds on nn_neuron.cpp by introducing a dataset
-            containing multiple input and target values. The neuron learns
-            from each training example by using forward propagation,
+            The program builds on nn_or.cpp. The training process is unchanged:
+            each training example is processed using forward propagation,
             backpropagation and gradient descent.
+
+            Unlike logical OR, however, logical XOR cannot be learned by a
+            single neuron of this form.
 
             The program demonstrates:
 
@@ -34,38 +36,35 @@ Function  : Neural Network Logical XOR Dataset Training.
                    and learning rate
 
               5. Final evaluation
-                - apply the trained parameters to every example
-                - compare predictions with target values
-                - evaluate the learned OR relationship without changing the parameters
-                 
-            This program demonstrates how a single artificial neuron can learn a relationship from multiple training examples.
+                 - apply the resulting parameters to every example
+                 - compare predictions with target values
+                 - demonstrate that the single neuron has failed to learn XOR
 
-            The neuron does not store a separate answer for each example. Instead, it has one set of trainable parameters: two weights and a bias. 
-            The same parameters are applied to each different pair of input values to calculate a weighted sum, which is then converted by the sigmoid function 
-            into a prediction between 0 and 1.
-            
-            training_example  : contains the input values and target output for the current training example.
-            neuron_parameters : contains the weights and bias that represent what the neuron has learned.
-            neuron_results    : contains the calculations for the current training example, including the weighted sum, prediction, loss and slopes.
-            neuron_gradients  : contains the gradients calculated by backpropagation and used by gradient descent to update the neuron parameters.
+            A single neuron calculates:
 
-            During training, the prediction is compared with the target value for the current example. 
-            Backpropagation calculates how the loss changes with respect to each weight and the bias, and gradient descent adjusts those parameters.
-            Repeating this process across the whole dataset and over many epochs causes one set of parameters to develop that works across all the training examples.
-           
-            In this program, the training_example dataset represents the logical XOR (Exclusive OR) function. 
-            The neuron learns numerical parameter values that reproduce the OR relationship, rather than the OR rule being explicitly programmed.
-            
-            In an example run starting with weight 1 = 0.8, weight 2 = -0.4 and bias = -0.1, after 1000 epochs (complete passes through
-            the dataset) the results are as follows:
-            
-            NB: The data represents logical XOR: 0 XOR 0 = 0, 0 XOR 1 = 1, 1 XOR 0 = 1, 1 XOR 1 = 0.
-            
-            Input 1     Input 2   Target    Prediction
-            0           0         0         
-            0           1         1         
-            1           0         1         
-            1           1         0         
+                z = (x1 * w1) + (x2 * w2) + b
+
+            With two inputs, this allows the neuron to form only one linear
+            decision boundary.
+
+            The XOR dataset is not linearly separable. The two target values
+            of 1 occur at opposite corners of the input space:
+
+                0 XOR 0 = 0
+                0 XOR 1 = 1
+                1 XOR 0 = 1
+                1 XOR 1 = 0
+
+            No single straight-line decision boundary can separate both target
+            1 examples from both target 0 examples.
+
+            Consequently, repeated training cannot produce one set of weights
+            and a bias that correctly represents the XOR relationship.
+
+            This failure is intentional and demonstrates a limitation of a
+            single artificial neuron. A later program introduces a hidden
+            layer containing multiple neurons, allowing the network to learn
+            the XOR relationship.      
             
               
 Author    : Ian Bond
@@ -504,8 +503,11 @@ void evaluate_dataset(const std::vector<training_example>& training_data,
   // No backpropagation or gradient descent is performed during evaluation,
   // so the neuron parameters are not changed.
   //
-  // This shows how well the final trained neuron reproduces the logical OR
-  // relationship represented by the dataset.
+  // This demonstrates that the final parameters cannot reproduce the logical
+  // XOR relationship using a single neuron.
+  //
+  // The predictions remain unable to correctly separate all four XOR examples,
+  // illustrating the limitation of a single linear decision boundary.
 
   neuron_results nr{};
 
