@@ -1,7 +1,7 @@
 /*
-Program   : nn_dataset.cpp
+Program   : nn_or.cpp
 System    : ai
-Function  : Neural Network Dataset Training.
+Function  : Neural Network Logical OR Dataset Training.
             Demonstration of training a single artificial neuron to learn the
             logical OR function from multiple training examples.
 
@@ -543,7 +543,7 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
   }
 
-  std::cout << "Neural Network - Dataset Training" << std::endl;
+  std::cout << "Neural Network Logical OR Dataset Training" << std::endl;
   
   // -----------------------------------------------------------------------------
   // INITIALIZE
