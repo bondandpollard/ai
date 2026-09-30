@@ -96,6 +96,8 @@ Version   Log/Ref   Date        Author        Description
 #include <string>
 #include <vector>
 
+bool verbose = false;     // Switch detailed output on/off
+
 // Structure holding one training example:
 //
 // Input values and the expected target output.
@@ -355,7 +357,7 @@ double prompt_double (const std::string& p_prompt) {
   // Prompt user to enter a double (floating point) number.
   
   double value;
-  std::cout << p_prompt << ":";
+  std::cout << p_prompt << " : ";
   while (!(std::cin >> value)) {   // handle bad input   
     std::cout << "Error: You must enter a valid floating point number: "; 
     std::cin.clear();
@@ -406,14 +408,12 @@ void display_training_example(const training_example& te) {
   // target is the expected output that the neuron's prediction
   // will be compared with during training.
   
-  std::cout << "Input 1 = "
-            << te.input_1 << std::endl;
-
-  std::cout << "Input 2 = "
-            << te.input_2 << std::endl;
-
-  std::cout << "Target = "
-            << te.target << std::endl; 
+  if (verbose) {
+    std::cout << std::endl << "TRAINING EXAMPLE" << std::endl;
+    std::cout << "Input 1 = " << te.input_1 << std::endl;
+    std::cout << "Input 2 = " << te.input_2 << std::endl;
+    std::cout << "Target = " << te.target << std::endl; 
+  }
 }
 
 void display_forward_pass(const neuron_results& nr) {
@@ -426,16 +426,12 @@ void display_forward_pass(const neuron_results& nr) {
   // loss         - squared error showing how far the prediction is from
   //                the target value
 
-  std::cout << std::endl << "FORWARD PASS" << std::endl;
-  
-  std::cout << "Weighted Sum = "
-            << nr.weighted_sum << std::endl;
-
-  std::cout << "Prediction (Sigmoid Output) = "
-            << nr.prediction << std::endl;
-
-  std::cout << "Loss = "
-            << nr.loss << std::endl;
+  if (verbose) {
+    std::cout << std::endl << "FORWARD PASS" << std::endl;
+    std::cout << "Weighted Sum = " << nr.weighted_sum << std::endl;
+    std::cout << "Prediction (Sigmoid Output) = " << nr.prediction << std::endl;
+    std::cout << "Loss = " << nr.loss << std::endl;
+  } 
 }
 
 void display_backpropagation(const neuron_results& nr) {
@@ -451,17 +447,14 @@ void display_backpropagation(const neuron_results& nr) {
   //
   // These values are then used to calculate the gradients for the
   // neuron's trainable parameters.
-
-  std::cout << std::endl << "BACKPROPAGATION" << std::endl;
-
-  std::cout << "Loss Slope = "
-            << nr.loss_slope << std::endl;
-
-  std::cout << "Prediction Slope = "
-            << nr.prediction_slope << std::endl;
-
-  std::cout << "Weighted Sum Slope = "
-            << nr.weighted_sum_slope << std::endl;
+  
+  
+  if (verbose) {
+    std::cout << std::endl << "BACKPROPAGATION" << std::endl;
+    std::cout << "Loss Slope = " << nr.loss_slope << std::endl;
+    std::cout << "Prediction Slope = " << nr.prediction_slope << std::endl;
+    std::cout << "Weighted Sum Slope = " << nr.weighted_sum_slope << std::endl;
+  }
 }
 
 void display_gradients(const neuron_gradients& ng) {
@@ -478,10 +471,12 @@ void display_gradients(const neuron_gradients& ng) {
   // The sign and size of each gradient determine how gradient descent
   // will adjust the corresponding parameter to reduce the loss.
   
-  std::cout << "GRADIENTS:" << std::endl;
-  std::cout << "Weight 1 Gradient = " << ng.weight_1 << std::endl;
-  std::cout << "Weight 2 Gradient = " << ng.weight_2 << std::endl;
-  std::cout << "Bias Gradient = " << ng.bias << std::endl;
+  if (verbose) {
+    std::cout << "GRADIENTS:" << std::endl;
+    std::cout << "Weight 1 Gradient = " << ng.weight_1 << std::endl;
+    std::cout << "Weight 2 Gradient = " << ng.weight_2 << std::endl;
+    std::cout << "Bias Gradient = " << ng.bias << std::endl;
+  }
 }
 
 void display_parameters(const neuron_parameters& np) {
@@ -520,7 +515,7 @@ void evaluate_dataset(const std::vector<training_example>& training_data,
   //
   // The predictions remain unable to correctly separate all four XOR examples,
   // illustrating the limitation of a single linear decision boundary.
-
+  
   neuron_results nr{};
 
   std::cout << std::endl << "FINAL EVALUATION" << std::endl;
@@ -551,7 +546,7 @@ int main(int argc, char* argv[]) {
   
     // Display command-line help if requested.
     if (args[1] == "-h" || args[1] == "--help") {
-      std::cout << "Usage: " << args[0] << " [number of epochs]" << std::endl
+      std::cout << "Usage: " << args[0] << " [number of epochs] [-v | --verbose]" << std::endl
                 << "  [-h | --help]" << std::endl;
       return EXIT_SUCCESS;
     }
@@ -574,15 +569,21 @@ int main(int argc, char* argv[]) {
     catch (const std::invalid_argument&) {
       std::cerr << "Error: epochs must be a positive integer." << std::endl;
       return EXIT_FAILURE;
-    }
+    } 
     catch (const std::out_of_range&) {
       std::cerr << "Error: epochs value is too large." << std::endl;
       return EXIT_FAILURE;
     }
+    
+    // Check if verbose output has been specified as an argument
+    if (argc > 2) {
+      if (args[2] == "-v" || args[2] == "--verbose") {
+        verbose = true;
+      }
+    }
   }
-  
+
   std::cout << "Neural Network Logical XOR Dataset Training" << std::endl;
-  std::cout << training_epochs << " training epochs." << std::endl;
   
   // -----------------------------------------------------------------------------
   // INITIALIZE
@@ -590,13 +591,18 @@ int main(int argc, char* argv[]) {
   
   set_training_dataset(training_data);                                   // Set values for the training dataset.
   set_neuron_parameters(np);                                             // Set initial neuron parameters: weights and bias.
-  display_parameters(np);                                                // Display the initial neuron parameters before training.    
+  std::cout << std::endl;
+  if (verbose) {display_parameters(np);}                                 // Display the initial neuron parameters before training.    
 
   for (int epoch = 1; epoch <= training_epochs; ++epoch) {
+    
+    double epoch_loss = 0.0;                                               // Sum of the losses for all training examples in the current epoch.
 
-    std::cout << std::endl
-              << "TRAINING EPOCH " << epoch << " of " << training_epochs
-              << std::endl;
+    if (verbose) {
+      std::cout << std::endl
+                << "TRAINING EPOCH " << epoch << " of " << training_epochs
+                << std::endl;
+    }
               
     // Process each training example in the dataset.
     // One complete pass through the dataset constitutes one epoch.
@@ -605,7 +611,6 @@ int main(int argc, char* argv[]) {
     // working data. np persists across all training examples and epochs.
     for (const training_example& te : training_data) {
       
-      std::cout << std::endl << "TRAINING EXAMPLE" << std::endl;
       display_training_example(te);                                        // Show which example is being trained.
       
       // -----------------------------------------------------------------------------
@@ -623,6 +628,7 @@ int main(int argc, char* argv[]) {
       forward_pass(te, np, nr);                                            // Perform the forward pass for the current training example using the current neuron parameters.
       display_forward_pass(nr);
       
+      epoch_loss += nr.loss;                                               // Add the current training example's loss to the epoch total.
       // -----------------------------------------------------------------------------
       // BACKPROPAGATION
       //
@@ -657,10 +663,27 @@ int main(int argc, char* argv[]) {
       // The gradient points towards increasing loss, so gradient descent
       // subtracts the gradient, scaled by the learning rate.
       // -----------------------------------------------------------------------------
-      std::cout << std::endl << "GRADIENT DESCENT" << std::endl;
+      if (verbose) {std::cout << std::endl << "GRADIENT DESCENT" << std::endl;}
       update_parameters(np, ng, learning_rate);                            // Update the weights and bias using gradient descent and the calculated gradients.                       
-      display_parameters(np);                                              // Display the updated neuron parameters after the gradient descent step.    
+      if (verbose) {display_parameters(np);}                               // Display the updated neuron parameters after the gradient descent step.    
 
+    }
+    
+    double average_loss = epoch_loss / training_data.size();               // Mean loss across all training examples in the current epoch.
+
+    if (verbose) {
+      std::cout << std::endl 
+                << "EPOCH "
+                << epoch << " AVERAGE LOSS = "
+                << average_loss
+                << std::endl;
+    }
+    else {
+      std::cout << "TRAINING EPOCH "
+                << epoch << " of " << training_epochs
+                << " Average Loss = "
+                << average_loss
+                << std::endl;
     }
   }
   
